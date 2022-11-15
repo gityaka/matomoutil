@@ -20,7 +20,7 @@
 
   /**
    * Class MatomoUtil
-   * Used for setting up Matomo after the files are already in place. (ex. phingme deployMatomo)
+   * Used for setting up Matomo after the files are already in place
    */
   class MatomoUtil
   {
@@ -35,7 +35,7 @@
     public function __construct()
     {
       // get CLI arguments
-      $this->aOptions = getopt("a:b:c:d:e:f:g:h:i:j:k:l:m:n:o:p:q:r:s:");
+      $this->aOptions = getopt("a:b:c:d:e:f:g:h:i:j:k:l:m:n:o:p:q:r:s:t:u:v:");
 
       // These constants are used inside of the Matomo/piwik library
       // as of version 4.5.0 and are required for correct installation
@@ -80,11 +80,12 @@
     /**
      * run installation routines
      */
-    public function execute()
+    public function execute() : void
     {
       $this->initMatomo();
       $this->setupDb();
       $this->updateComponents();
+      $this->fixPermissions();
     }
 
     /**
@@ -249,6 +250,28 @@
       else
       {
         echo "\n NO AUTH TOKEN RETURNED\n\n";
+      }
+    }
+
+    /**
+     * Verify permissions of data directory
+     * 
+     * @return void
+     */
+    private function fixPermissions() : void
+    {
+      if (!empty($this->aOptions['t']) && !empty($this->aOptions['u']) && file_exists($this->aOptions['v']))
+      {
+        $sGroup = escapeshellarg($this->aOptions['t']);
+        $sUser = escapeshellarg($this->aOptions['u']);
+        $sMatomoDataDir = escapeshellarg($this->aOptions['v']);
+        exec("chown -R $sUser $sMatomoDataDir");
+        exec("chgrp -R $sGroup $sMatomoDataDir");
+        echo "Fixed permissions.\n";
+      }
+      else
+      {
+        echo "Failed to fix permissions (invalid arguments given).\n";
       }
     }
   }
